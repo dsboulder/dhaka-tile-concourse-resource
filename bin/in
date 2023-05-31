@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+filename=/tmp/check.json
+cat > ${filename}
+namespace=$(jq -r '.source.namespace' ${filename})
+workload=$(jq -r '.source.workload' ${filename})
+password=$(jq -r '.source.robotPassword' ${filename})
+username='robot$dhaka+concourse-reader'
+echo "NS=${namespace} Workload=${workload}" >&2
+
+destFolder="$1"
+tmpFolder="$(mktemp -d)"
+version=$(jq -r '.version.digest' ${filename})
+registry=docker://dev.registry.pivotal.io/dhaka/supply-chain/${workload}-${namespace}@${version}
+echo "Exporting ${registry}" >&2
+skopeo copy --src-creds ${username}:${password} ${registry} oci://${tmpFolder}/oci:latest
+umoci raw unpack --image ${tmpFolder}/oci ${tmpFolder}
+mv ${tmpFolder}/workspace/tile.pivotal ${destFolder}/
