@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+filename=/tmp/check.json
+cat > ${filename}
+namespace=$(jq -r '.source.namespace' ${filename})
+workload=$(jq -r '.source.workload' ${filename})
+password=$(jq -r '.source.robotPassword' ${filename})
+username='robot$dhaka+concourse-reader'
+
+echo "NS=${namespace} Workload=${workload}" >&2
+registry=docker://dev.registry.pivotal.io/dhaka/supply-chain/${workload}-${namespace}:latest
+echo "Inspecting ${registry}" >&2
+digest=$(skopeo inspect --creds ${username}:${password} ${registry} | jq -r .Digest)
+echo "Found version ${digest}" >&2
+
+echo "[{ \"digest\": \"${digest}\" }]"
