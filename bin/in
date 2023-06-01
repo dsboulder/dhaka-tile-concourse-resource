@@ -15,6 +15,11 @@ tmpFolder="$(mktemp -d)"
 version=$(jq -r '.version.digest' ${filename})
 registry=docker://dev.registry.pivotal.io/dhaka/supply-chain/${workload}-${namespace}@${version}
 echo "Exporting ${registry}" >&2
-skopeo copy --src-creds ${username}:${password} ${registry} oci://${tmpFolder}/oci:latest
-umoci raw unpack --image ${tmpFolder}/oci ${tmpFolder}
+skopeo copy --src-creds ${username}:${password} ${registry} oci://${tmpFolder}/oci:latest 1>&2
+umoci raw unpack --image ${tmpFolder}/oci ${tmpFolder} 1>&2
 mv ${tmpFolder}/workspace/tile.pivotal ${destFolder}/
+
+echo "{
+        \"version\": { \"ref\": \"${version}\" },
+        \"metadata\": []
+      }"
